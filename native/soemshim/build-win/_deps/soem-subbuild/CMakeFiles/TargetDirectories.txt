@@ -1,0 +1,3 @@
+C:/Users/ATI/source/repos/DirectControl/native/soemshim/build-win/_deps/soem-subbuild/CMakeFiles/soem-populate.dir
+C:/Users/ATI/source/repos/DirectControl/native/soemshim/build-win/_deps/soem-subbuild/CMakeFiles/ALL_BUILD.dir
+C:/Users/ATI/source/repos/DirectControl/native/soemshim/build-win/_deps/soem-subbuild/CMakeFiles/ZERO_CHECK.dir

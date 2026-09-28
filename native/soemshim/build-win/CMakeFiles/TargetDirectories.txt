@@ -1,0 +1,13 @@
+C:/Users/ATI/source/repos/DirectControl/native/soemshim/build-win/CMakeFiles/soemshim.dir
+C:/Users/ATI/source/repos/DirectControl/native/soemshim/build-win/CMakeFiles/INSTALL.dir
+C:/Users/ATI/source/repos/DirectControl/native/soemshim/build-win/CMakeFiles/ALL_BUILD.dir
+C:/Users/ATI/source/repos/DirectControl/native/soemshim/build-win/CMakeFiles/ZERO_CHECK.dir
+C:/Users/ATI/source/repos/DirectControl/native/soemshim/build-win/_deps/soem-build/CMakeFiles/soem.dir
+C:/Users/ATI/source/repos/DirectControl/native/soemshim/build-win/_deps/soem-build/CMakeFiles/INSTALL.dir
+C:/Users/ATI/source/repos/DirectControl/native/soemshim/build-win/_deps/soem-build/CMakeFiles/ALL_BUILD.dir
+C:/Users/ATI/source/repos/DirectControl/native/soemshim/build-win/_deps/soem-build/test/linux/slaveinfo/CMakeFiles/slaveinfo.dir
+C:/Users/ATI/source/repos/DirectControl/native/soemshim/build-win/_deps/soem-build/test/linux/slaveinfo/CMakeFiles/INSTALL.dir
+C:/Users/ATI/source/repos/DirectControl/native/soemshim/build-win/_deps/soem-build/test/linux/eepromtool/CMakeFiles/eepromtool.dir
+C:/Users/ATI/source/repos/DirectControl/native/soemshim/build-win/_deps/soem-build/test/linux/eepromtool/CMakeFiles/INSTALL.dir
+C:/Users/ATI/source/repos/DirectControl/native/soemshim/build-win/_deps/soem-build/test/linux/simple_test/CMakeFiles/simple_test.dir
+C:/Users/ATI/source/repos/DirectControl/native/soemshim/build-win/_deps/soem-build/test/linux/simple_test/CMakeFiles/INSTALL.dir

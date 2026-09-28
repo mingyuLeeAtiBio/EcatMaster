@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\ATI\source\repos\DirectControl\native\soemshim\build-win\_deps\soem-subbuild\CMakeFiles\394ca1051c338c4a1015435147144a53\soem-populate-mkdir.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\ATI\source\repos\DirectControl\native\soemshim\build-win\_deps\soem-subbuild\CMakeFiles\394ca1051c338c4a1015435147144a53\soem-populate-download.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\ATI\source\repos\DirectControl\native\soemshim\build-win\_deps\soem-subbuild\CMakeFiles\394ca1051c338c4a1015435147144a53\soem-populate-update.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\ATI\source\repos\DirectControl\native\soemshim\build-win\_deps\soem-subbuild\CMakeFiles\394ca1051c338c4a1015435147144a53\soem-populate-patch.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\ATI\source\repos\DirectControl\native\soemshim\build-win\_deps\soem-subbuild\CMakeFiles\394ca1051c338c4a1015435147144a53\soem-populate-configure.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\ATI\source\repos\DirectControl\native\soemshim\build-win\_deps\soem-subbuild\CMakeFiles\394ca1051c338c4a1015435147144a53\soem-populate-build.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\ATI\source\repos\DirectControl\native\soemshim\build-win\_deps\soem-subbuild\CMakeFiles\394ca1051c338c4a1015435147144a53\soem-populate-install.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\ATI\source\repos\DirectControl\native\soemshim\build-win\_deps\soem-subbuild\CMakeFiles\394ca1051c338c4a1015435147144a53\soem-populate-test.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\ATI\source\repos\DirectControl\native\soemshim\build-win\_deps\soem-subbuild\CMakeFiles\05b2a3ac17e0342a2d84fe9a73054146\soem-populate-complete.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\ATI\source\repos\DirectControl\native\soemshim\build-win\_deps\soem-subbuild\CMakeFiles\6abe6b72b6429208077fa855bb3589bf\soem-populate.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\ATI\source\repos\DirectControl\native\soemshim\build-win\_deps\soem-subbuild\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Users\ATI\source\repos\DirectControl\native\soemshim\build-win\_deps\soem-subbuild\CMakeFiles\soem-populate" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{D9388B11-1C55-33D6-9D30-7D81D64A72FD}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

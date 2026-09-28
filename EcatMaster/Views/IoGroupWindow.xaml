@@ -1,0 +1,15 @@
+<Window x:Class="EcatMaster.Views.IoGroupWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="IO" Width="760" Height="420" MinWidth="460" MinHeight="260"
+        Background="{StaticResource WindowBrush}" FontSize="13" ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner">
+    <!-- 모달리스 IO 그룹 창. 본문은 Themes/DataTemplates.xaml 의 IoGroupContentTemplate (IO 탭과 공유) -->
+    <Grid Margin="10">
+        <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="10">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource IoGroupContentTemplate}"/>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</Window>

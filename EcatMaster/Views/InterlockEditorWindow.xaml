@@ -1,0 +1,131 @@
+<Window x:Class="EcatMaster.Views.InterlockEditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:EcatMaster.ViewModels"
+        xmlns:infra="clr-namespace:EcatMaster.Infrastructure"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DataContext="{d:DesignInstance Type=vm:InterlockEditorViewModel}"
+        Title="{Binding Title}" Width="640" SizeToContent="Height" MinWidth="560"
+        Background="{StaticResource WindowBrush}" FontSize="13" ShowInTaskbar="False" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner">
+    <Window.Resources>
+        <Style x:Key="RowLabel" TargetType="TextBlock" BasedOn="{StaticResource FieldLabel}">
+            <Setter Property="Margin" Value="0,0,10,0"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+        </Style>
+    </Window.Resources>
+    <DockPanel Margin="12">
+        <!-- 하단: 검증/경고/미리보기 + 버튼 -->
+        <StackPanel DockPanel.Dock="Bottom" Margin="0,10,0,0">
+            <Border Background="{StaticResource SubtleBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,6">
+                <StackPanel>
+                    <TextBlock Text="미리보기" FontSize="11" Foreground="{StaticResource MutedBrush}"/>
+                    <TextBlock Text="{Binding Preview}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,2,0,0"/>
+                </StackPanel>
+            </Border>
+            <TextBlock Text="{Binding ValidationMessage}" Foreground="{StaticResource CriticalBrush}" TextWrapping="Wrap" Margin="2,0,0,4"
+                       Visibility="{Binding ValidationMessage, Converter={StaticResource NullToVis}}"/>
+            <TextBlock Text="{Binding Warning}" Foreground="{StaticResource CautionBrush}" TextWrapping="Wrap" FontSize="12" Margin="2,0,0,4"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0">
+                <Button Content="저장" Style="{StaticResource PrimaryButton}" Click="Save_Click" IsDefault="True" IsEnabled="{Binding CanSave}" MinWidth="90"/>
+                <Button Content="취소" IsCancel="True" MinWidth="90"/>
+            </StackPanel>
+        </StackPanel>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="110"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" Text="이름" Style="{StaticResource RowLabel}"/>
+            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Width="220" HorizontalAlignment="Left"
+                     AutomationProperties.Name="인터록 이름"/>
+
+            <TextBlock Grid.Row="1" Text="조건 종류" Style="{StaticResource RowLabel}"/>
+            <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding Sources}" SelectedItem="{Binding SelectedSource}" DisplayMemberPath="Label" Width="220" HorizontalAlignment="Left"
+                      AutomationProperties.Name="조건 종류"/>
+
+            <!-- 디지털 입력 -->
+            <StackPanel Grid.Row="2" Grid.Column="1" Visibility="{Binding IsInputSource, Converter={StaticResource BoolToVis}}">
+                <StackPanel Orientation="Horizontal" Margin="0,2">
+                    <TextBlock Text="입력 모듈" Style="{StaticResource FieldLabel}" Width="70" Margin="0"/>
+                    <ComboBox ItemsSource="{Binding InputModules}" SelectedItem="{Binding SelectedInputModule}" DisplayMemberPath="Label" Width="240" AutomationProperties.Name="입력 모듈"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,2">
+                    <TextBlock Text="입력 비트" Style="{StaticResource FieldLabel}" Width="70" Margin="0"/>
+                    <ComboBox ItemsSource="{Binding InputBits}" SelectedItem="{Binding SelectedInputBit}" DisplayMemberPath="Label" Width="240" AutomationProperties.Name="입력 비트"/>
+                    <CheckBox Content="0 이면 활성 (NC 접점)" IsChecked="{Binding ActiveLow}" VerticalAlignment="Center" Margin="14,0,0,0"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- 축 조건 -->
+            <StackPanel Grid.Row="3" Grid.Column="1" Visibility="{Binding IsAxisSource, Converter={StaticResource BoolToVis}}">
+                <StackPanel Orientation="Horizontal" Margin="0,2">
+                    <TextBlock Text="소스 축" Style="{StaticResource FieldLabel}" Width="70" Margin="0"/>
+                    <ComboBox ItemsSource="{Binding SourceAxes}" SelectedItem="{Binding SelectedSourceAxis}" DisplayMemberPath="Label" Width="240" AutomationProperties.Name="소스 축"/>
+                    <TextBlock Text="(대상 축에 포함되면 안 됨)" Style="{StaticResource FieldLabel}" FontSize="11"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,2" Visibility="{Binding IsRangeSource, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="범위" Style="{StaticResource FieldLabel}" Width="70" Margin="0"/>
+                    <TextBox Text="{Binding Min, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}" Width="90" AutomationProperties.Name="범위 최소"/>
+                    <TextBlock Text="~" Style="{StaticResource FieldLabel}"/>
+                    <TextBox Text="{Binding Max, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}" Width="90" AutomationProperties.Name="범위 최대"/>
+                    <ComboBox ItemsSource="{Binding Units}" SelectedItem="{Binding SelectedUnit}" DisplayMemberPath="Label" Width="150" Margin="6,2,2,2" AutomationProperties.Name="단위"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,2" Visibility="{Binding IsRangeSource, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="히스테리시스" Style="{StaticResource FieldLabel}" Width="70" Margin="0" FontSize="12"/>
+                    <TextBox Text="{Binding Hysteresis, UpdateSourceTrigger=PropertyChanged}" Width="90" AutomationProperties.Name="히스테리시스"/>
+                    <TextBlock Text="경계에서 이 값만큼 벗어나야 차단이 풀림 (0 = 없음)" Style="{StaticResource FieldLabel}" FontSize="11"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,2" Visibility="{Binding IsMovingSource, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="속도 문턱" Style="{StaticResource FieldLabel}" Width="70" Margin="0"/>
+                    <TextBox Text="{Binding VelocityThreshold, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}" Width="90" AutomationProperties.Name="속도 문턱"/>
+                    <ComboBox ItemsSource="{Binding Units}" SelectedItem="{Binding SelectedUnit}" DisplayMemberPath="Label" Width="150" Margin="6,2,2,2"/>
+                    <TextBlock Text="/s 이상이면 이동 중 (비우면 명령 상태만)" Style="{StaticResource FieldLabel}" FontSize="11"/>
+                </StackPanel>
+            </StackPanel>
+
+            <TextBlock Grid.Row="4" Text="방식" Style="{StaticResource RowLabel}"/>
+            <ComboBox Grid.Row="4" Grid.Column="1" ItemsSource="{Binding Modes}" SelectedItem="{Binding SelectedMode}" DisplayMemberPath="Label" Width="220" HorizontalAlignment="Left" AutomationProperties.Name="방식"/>
+
+            <TextBlock Grid.Row="5" Text="동작" Style="{StaticResource RowLabel}"/>
+            <ComboBox Grid.Row="5" Grid.Column="1" ItemsSource="{Binding Actions}" SelectedItem="{Binding SelectedAction}" DisplayMemberPath="Label" Width="260" HorizontalAlignment="Left" AutomationProperties.Name="동작"/>
+
+            <TextBlock Grid.Row="6" Text="대상 축" Style="{StaticResource RowLabel}" VerticalAlignment="Top" Margin="0,6,10,0"/>
+            <StackPanel Grid.Row="6" Grid.Column="1">
+                <CheckBox Content="전체 축" IsChecked="{Binding AllAxes}" Margin="2,4"/>
+                <ItemsControl ItemsSource="{Binding TargetAxes}" IsEnabled="{Binding AllAxes, Converter={StaticResource Inverse}}">
+                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel MaxWidth="480"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <CheckBox Content="{Binding Label}" IsChecked="{Binding IsChecked}" Margin="2,3,12,3"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+            <TextBlock Grid.Row="7" Text="차단" Style="{StaticResource RowLabel}"/>
+            <CheckBox Grid.Row="7" Grid.Column="1" Content="활성 중 대상 축의 서보 온·이동·조그·원점복귀 명령 거부" IsChecked="{Binding BlockMotion}" Margin="2,4"/>
+
+            <TextBlock Grid.Row="8" Text="표시 출력" Style="{StaticResource RowLabel}"/>
+            <StackPanel Grid.Row="8" Grid.Column="1" Orientation="Horizontal">
+                <ComboBox ItemsSource="{Binding OutputModules}" SelectedItem="{Binding SelectedOutputModule}" DisplayMemberPath="Label" Width="220" AutomationProperties.Name="표시 출력 모듈"/>
+                <ComboBox ItemsSource="{Binding OutputBits}" SelectedItem="{Binding SelectedOutputBit}" DisplayMemberPath="Label" Width="200" Visibility="{Binding HasOutput, Converter={StaticResource BoolToVis}}" AutomationProperties.Name="표시 출력 비트"/>
+            </StackPanel>
+
+            <TextBlock Grid.Row="9" Text="메시지" Style="{StaticResource RowLabel}"/>
+            <TextBox Grid.Row="9" Grid.Column="1" Text="{Binding Message, UpdateSourceTrigger=PropertyChanged}" Width="420" HorizontalAlignment="Left" AutomationProperties.Name="메시지"/>
+
+            <TextBlock Grid.Row="10" Text="사용" Style="{StaticResource RowLabel}"/>
+            <CheckBox Grid.Row="10" Grid.Column="1" Content="이 규칙을 평가한다 (끄면 시운전용 해제 상태로 저장)" IsChecked="{Binding Enabled}" Margin="2,4"/>
+        </Grid>
+    </DockPanel>
+</Window>

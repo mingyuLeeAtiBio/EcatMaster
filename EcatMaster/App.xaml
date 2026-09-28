@@ -1,0 +1,15 @@
+<Application x:Class="EcatMaster.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             StartupUri="Views/MainWindow.xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- 순서 중요: 스타일/브러시 → 컨버터 → 이를 참조하는 DataTemplate -->
+                <ResourceDictionary Source="Themes/WinUI3.xaml"/>        <!-- WinUI 3 (Fluent) 스타일 · 애니메이션 없음 -->
+                <ResourceDictionary Source="Themes/Converters.xaml"/>    <!-- 전역 컨버터 (BoolToVis, Inverse, NullToVis, Join, LocalTime, UsToMs) -->
+                <ResourceDictionary Source="Themes/DataTemplates.xaml"/> <!-- 공용 DataTemplate (IO 비트/모듈/그룹) -->
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

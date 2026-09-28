@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>EcatMaster.Api</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+
+    <!-- 실시간 스레드 지터를 줄이기 위한 GC 설정 -->
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+    <TieredPGO>false</TieredPGO>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.*" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="7.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EcatMaster.Core\EcatMaster.Core.csproj" />
+  </ItemGroup>
+
+  <!-- 미니PC 에서 native/soemshim/build.sh 로 만든 libsoemshim.so 를 출력 폴더에 복사 -->
+  <ItemGroup Condition="Exists('..\..\native\soemshim\build\libsoemshim.so')">
+    <None Include="..\..\native\soemshim\build\libsoemshim.so" CopyToOutputDirectory="PreserveNewest" Link="libsoemshim.so" />
+  </ItemGroup>
+
+  <!-- Windows 개발 PC 에서 API 를 SOEM 모드로 시험할 때 (build-win.ps1 산출물) -->
+  <ItemGroup Condition="Exists('..\..\native\soemshim\build-win\soemshim.dll')">
+    <None Include="..\..\native\soemshim\build-win\soemshim.dll" CopyToOutputDirectory="PreserveNewest" Link="soemshim.dll" />
+  </ItemGroup>
+
+</Project>

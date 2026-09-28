@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\ATI\source\repos\DirectControl\native\soemshim\build-win\CMakeFiles\139976d4a651183570bdff10220e4349\INSTALL_force.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{99EB7823-D338-31FD-B9A5-FAC6DBAED302}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

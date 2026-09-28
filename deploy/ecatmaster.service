@@ -1,0 +1,31 @@
+# /etc/systemd/system/ecatmaster.service
+#   sudo cp deploy/ecatmaster.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now ecatmaster
+[Unit]
+Description=EcatMaster EtherCAT motion API (SOEM)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ecatmaster
+Group=dialout
+WorkingDirectory=/opt/ecatmaster
+ExecStart=/opt/ecatmaster/EcatMaster.Api
+Restart=on-failure
+RestartSec=3
+
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=DOTNET_gcServer=0
+Environment=DOTNET_GCgen0size=0x4000000
+Environment=DOTNET_TieredPGO=0
+
+# raw socket(EtherCAT) + SCHED_FIFO 를 위해 root 없이 필요한 권한만 부여
+AmbientCapabilities=CAP_NET_RAW CAP_SYS_NICE
+CapabilityBoundingSet=CAP_NET_RAW CAP_SYS_NICE
+LimitRTPRIO=99
+LimitMEMLOCK=infinity
+Nice=-10
+
+[Install]
+WantedBy=multi-user.target

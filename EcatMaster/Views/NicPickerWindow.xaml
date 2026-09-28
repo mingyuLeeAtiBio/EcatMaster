@@ -1,0 +1,27 @@
+<Window x:Class="EcatMaster.Views.NicPickerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="EtherCAT NIC 선택" Width="640" SizeToContent="Height" MinWidth="520"
+        Background="{StaticResource WindowBrush}" FontSize="13" ShowInTaskbar="False" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner">
+    <DockPanel Margin="12">
+        <TextBlock DockPanel.Dock="Top" FontSize="14" FontWeight="SemiBold" Text="EtherCAT 슬레이브가 여러 NIC 에서 발견되었습니다"/>
+        <TextBlock DockPanel.Dock="Top" FontSize="12" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,4,0,10"
+                   Text="연결할 포트를 선택하세요. 선택한 NIC 는 다음 실행부터 기본값으로 기억됩니다(자동 연결 시 다시 탐색하되 여러 개면 이 창이 다시 뜹니다)."/>
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+            <Button Content="연결" Style="{StaticResource PrimaryButton}" Click="Ok_Click" IsDefault="True" MinWidth="90" AutomationProperties.Name="NIC 연결"/>
+            <Button Content="취소" IsCancel="True" MinWidth="90"/>
+        </StackPanel>
+        <ListBox x:Name="List" MinHeight="120" MaxHeight="360" SelectionMode="Single" MouseDoubleClick="List_MouseDoubleClick" AutomationProperties.Name="NIC 목록">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Margin="4,4">
+                        <TextBlock Text="{Binding Adapter.Description}" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding Summary}" FontSize="12" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding Adapter.Name}" FontSize="11" Foreground="{StaticResource TextDisabledBrush}" FontFamily="{StaticResource MonoFont}"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </DockPanel>
+</Window>

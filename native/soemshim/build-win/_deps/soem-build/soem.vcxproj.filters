@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\ATI\source\repos\DirectControl\native\soemshim\build-win\_deps\soem-src\soem\ethercatbase.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ATI\source\repos\DirectControl\native\soemshim\build-win\_deps\soem-src\soem\ethercatcoe.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ATI\source\repos\DirectControl\native\soemshim\build-win\_deps\soem-src\soem\ethercatconfig.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ATI\source\repos\DirectControl\native\soemshim\build-win\_deps\soem-src\soem\ethercatdc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ATI\source\repos\DirectControl\native\soemshim\build-win\_deps\soem-src\soem\ethercateoe.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ATI\source\repos\DirectControl\native\soemshim\build-win\_deps\soem-src\soem\ethercatfoe.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ATI\source\repos\DirectControl\native\soemshim\build-win\_deps\soem-src\soem\ethercatmain.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ATI\source\repos\DirectControl\native\soemshim\build-win\_deps\soem-src\soem\ethercatprint.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ATI\source\repos\DirectControl\native\soemshim\build-win\_deps\soem-src\soem\ethercatsoe.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ATI\source\repos\DirectControl\native\soemshim\build-win\_deps\soem-src\osal\win32\osal.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ATI\source\repos\DirectControl\native\soemshim\build-win\_deps\soem-src\oshw\win32\nicdrv.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ATI\source\repos\DirectControl\native\soemshim\build-win\_deps\soem-src\oshw\win32\oshw.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\ATI\source\repos\DirectControl\native\soemshim\build-win\_deps\soem-src\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{9D5E819F-FE6B-3824-8A1E-2AA7826DDACB}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "C:/Users/ATI/source/repos/DirectControl/native/soemshim/build-win/_deps/soem-subbuild/CMakeFiles/soem-populate"
+		},
+		{
+			"file" : "C:/Users/ATI/source/repos/DirectControl/native/soemshim/build-win/_deps/soem-subbuild/CMakeFiles/6abe6b72b6429208077fa855bb3589bf/soem-populate.rule"
+		},
+		{
+			"file" : "C:/Users/ATI/source/repos/DirectControl/native/soemshim/build-win/_deps/soem-subbuild/CMakeFiles/05b2a3ac17e0342a2d84fe9a73054146/soem-populate-complete.rule"
+		},
+		{
+			"file" : "C:/Users/ATI/source/repos/DirectControl/native/soemshim/build-win/_deps/soem-subbuild/CMakeFiles/394ca1051c338c4a1015435147144a53/soem-populate-build.rule"
+		},
+		{
+			"file" : "C:/Users/ATI/source/repos/DirectControl/native/soemshim/build-win/_deps/soem-subbuild/CMakeFiles/394ca1051c338c4a1015435147144a53/soem-populate-configure.rule"
+		},
+		{
+			"file" : "C:/Users/ATI/source/repos/DirectControl/native/soemshim/build-win/_deps/soem-subbuild/CMakeFiles/394ca1051c338c4a1015435147144a53/soem-populate-download.rule"
+		},
+		{
+			"file" : "C:/Users/ATI/source/repos/DirectControl/native/soemshim/build-win/_deps/soem-subbuild/CMakeFiles/394ca1051c338c4a1015435147144a53/soem-populate-install.rule"
+		},
+		{
+			"file" : "C:/Users/ATI/source/repos/DirectControl/native/soemshim/build-win/_deps/soem-subbuild/CMakeFiles/394ca1051c338c4a1015435147144a53/soem-populate-mkdir.rule"
+		},
+		{
+			"file" : "C:/Users/ATI/source/repos/DirectControl/native/soemshim/build-win/_deps/soem-subbuild/CMakeFiles/394ca1051c338c4a1015435147144a53/soem-populate-patch.rule"
+		},
+		{
+			"file" : "C:/Users/ATI/source/repos/DirectControl/native/soemshim/build-win/_deps/soem-subbuild/CMakeFiles/394ca1051c338c4a1015435147144a53/soem-populate-test.rule"
+		},
+		{
+			"file" : "C:/Users/ATI/source/repos/DirectControl/native/soemshim/build-win/_deps/soem-subbuild/CMakeFiles/394ca1051c338c4a1015435147144a53/soem-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"soem-populate"
+		],
+		"name" : "soem-populate"
+	}
+}

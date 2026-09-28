@@ -1,0 +1,105 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:vm="clr-namespace:EcatMaster.ViewModels">
+
+    <!-- ============================================================
+         공용 DataTemplate. MainWindow 의 IO 탭과 모달리스 IoGroupWindow 가 같은 템플릿을 쓴다.
+         Converters.xaml(BoolToVis 등)과 WinUI3.xaml(브러시) 이 먼저 병합되어 있어야 한다.
+         ============================================================ -->
+
+    <!-- IO 비트 하나: 켜지면 녹색(성공색), 강제 입력은 주황 테두리. 애니메이션 없음 -->
+    <DataTemplate x:Key="IoBitTemplate" DataType="{x:Type vm:IoBitViewModel}">
+        <Button Command="{Binding ToggleCommand}" Content="{Binding Label}" Width="60" Height="40" Margin="2" Padding="0" MinWidth="0"
+                FontSize="10" FontFamily="{StaticResource MonoFont}" ToolTip="{Binding Name}">
+            <Button.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="별칭 변경…" Command="{Binding RenameCommand}"/>
+                </ContextMenu>
+            </Button.ContextMenu>
+            <Button.Style>
+                <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsOn}" Value="True">
+                            <Setter Property="Background" Value="{StaticResource SuccessSoftBrush}"/>
+                            <Setter Property="BorderBrush" Value="{StaticResource SuccessBrush}"/>
+                            <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
+                            <Setter Property="FontWeight" Value="Bold"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsForced}" Value="True">
+                            <Setter Property="BorderBrush" Value="{StaticResource WarnBrush}"/>
+                            <Setter Property="BorderThickness" Value="2"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Button.Style>
+        </Button>
+    </DataTemplate>
+
+    <!-- IO 모듈 한 개의 본문(입력/출력 비트). IO 그룹 템플릿 안에서 모듈마다 쓰인다 -->
+    <DataTemplate x:Key="IoModuleContentTemplate" DataType="{x:Type vm:IoModuleViewModel}">
+        <StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="2,0,0,2">
+                <TextBlock Text="{Binding Title}" FontWeight="SemiBold"/>
+                <Border Background="{StaticResource CriticalSoftBrush}" CornerRadius="10" Padding="8,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Online}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <TextBlock Text="오프라인" FontSize="11" Foreground="{StaticResource CriticalBrush}"/>
+                </Border>
+            </StackPanel>
+            <TextBlock Text="입력" FontSize="11" Foreground="{StaticResource MutedBrush}" Margin="2,6,0,0" Visibility="{Binding HasInputs, Converter={StaticResource BoolToVis}}"/>
+            <ItemsControl ItemsSource="{Binding Inputs}" ItemTemplate="{StaticResource IoBitTemplate}" Visibility="{Binding HasInputs, Converter={StaticResource BoolToVis}}">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            </ItemsControl>
+            <TextBlock Text="출력" FontSize="11" Foreground="{StaticResource MutedBrush}" Margin="2,6,0,0" Visibility="{Binding HasOutputs, Converter={StaticResource BoolToVis}}"/>
+            <ItemsControl ItemsSource="{Binding Outputs}" ItemTemplate="{StaticResource IoBitTemplate}" Visibility="{Binding HasOutputs, Converter={StaticResource BoolToVis}}">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            </ItemsControl>
+            <Button Content="강제 해제" Command="{Binding ClearForcedCommand}" HorizontalAlignment="Left" Height="24" MinWidth="70" FontSize="11" Margin="2,8,0,0"
+                    Visibility="{Binding CanForceInputs, Converter={StaticResource BoolToVis}}"/>
+        </StackPanel>
+    </DataTemplate>
+
+    <!-- IO 그룹(탭 하나) 본문: 모듈 카드들을 나란히(입력 왼쪽, 출력 오른쪽) + 별칭 편집. IO 탭과 모달리스 IoGroupWindow 가 공유 -->
+    <DataTemplate x:Key="IoGroupContentTemplate" DataType="{x:Type vm:IoGroupViewModel}">
+        <DockPanel>
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="2,0,0,6">
+                <Button Content="별칭 편집…" Command="{Binding EditAliasesCommand}" Height="26" MinWidth="86" FontSize="11"
+                        ToolTip="이 그룹 모든 비트의 별칭을 표에서 한 번에 고친다 (devices.json 저장)"/>
+                <TextBlock Text="비트 오른쪽 클릭으로도 별칭을 바꿀 수 있습니다." FontSize="11" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" Margin="10,0,0,0"/>
+            </StackPanel>
+            <ItemsControl ItemsSource="{Binding Modules}">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type vm:IoModuleViewModel}">
+                        <Border Background="{StaticResource SubtleBrush}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,0,8,8">
+                            <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource IoModuleContentTemplate}"/>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </DockPanel>
+    </DataTemplate>
+
+    <!-- IO 그룹 탭 머리글: 온라인 점 + 그룹 이름 -->
+    <DataTemplate x:Key="IoGroupTabHeaderTemplate" DataType="{x:Type vm:IoGroupViewModel}">
+        <StackPanel Orientation="Horizontal" ToolTip="{Binding Subtitle}">
+            <Ellipse Width="8" Height="8" Margin="0,0,6,0" VerticalAlignment="Center">
+                <Ellipse.Style>
+                    <Style TargetType="Ellipse">
+                        <Setter Property="Fill" Value="{StaticResource CriticalBrush}"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding AllOnline}" Value="True"><Setter Property="Fill" Value="{StaticResource SuccessBrush}"/></DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Ellipse.Style>
+            </Ellipse>
+            <TextBlock Text="{Binding Name}"/>
+        </StackPanel>
+    </DataTemplate>
+
+</ResourceDictionary>

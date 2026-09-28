@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <!-- soemshim.dll 이 x64 이므로 프로세스도 x64 로 고정 -->
+    <PlatformTarget>x64</PlatformTarget>
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\src\EcatMaster.Core\EcatMaster.Core.csproj" />
+    <!-- MVVM 베이스(ObservableObject) 와 커맨드(RelayCommand/AsyncRelayCommand) -->
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+  </ItemGroup>
+
+  <!-- native/soemshim/build-win.ps1 로 만든 Windows 용 SOEM 심을 출력 폴더에 복사 -->
+  <ItemGroup Condition="Exists('..\native\soemshim\build-win\soemshim.dll')">
+    <None Include="..\native\soemshim\build-win\soemshim.dll" CopyToOutputDirectory="PreserveNewest" Link="soemshim.dll" />
+  </ItemGroup>
+
+</Project>

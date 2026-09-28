@@ -1,0 +1,13 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:infra="clr-namespace:EcatMaster.Infrastructure">
+
+    <!-- 앱 전역 컨버터. 모든 창/템플릿이 같은 키로 참조한다 (창마다 다시 정의하지 않음) -->
+    <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    <infra:InverseBoolConverter x:Key="Inverse"/>
+    <infra:NullToVisibilityConverter x:Key="NullToVis"/>
+    <infra:JoinConverter x:Key="Join"/>
+    <infra:LocalTimeConverter x:Key="LocalTime"/>
+    <infra:UsToMsConverter x:Key="UsToMs"/>
+
+</ResourceDictionary>
