@@ -19,7 +19,7 @@ public enum EnduranceMode
 public sealed record EnduranceTestRequest(
     EnduranceMode Mode,
     double Velocity,
-    /// <summary>운전 시간 [분]. 60 = 1시간.</summary>
+    /// <summary>운전 시간 [분]. 60 = 1시간, 0 = 중지할 때까지 무한.</summary>
     double DurationMinutes,
     double PointA = 0,
     double PointB = 0,
@@ -64,6 +64,7 @@ public sealed record EnduranceTestStatus(
     string Mode,
     string Phase,
     double ElapsedSeconds,
+    /// <summary>설정 시간 [s]. 0 = 무한.</summary>
     double DurationSeconds,
     double TargetRpm,
     double LastRpm,
@@ -102,7 +103,7 @@ public sealed class EnduranceTestRunner
 
     public EnduranceTestStatus Start(IEtherCatMaster master, Axis axis, EnduranceTestRequest req)
     {
-        if (req.DurationMinutes <= 0) throw new ArgumentException("durationMinutes must be > 0");
+        if (req.DurationMinutes < 0) throw new ArgumentException("durationMinutes must be >= 0 (0 = infinite)");
         if (req.Velocity == 0) throw new ArgumentException("velocity must not be 0");
         if (req.Mode == EnduranceMode.Reciprocate && req.Velocity < 0) throw new ArgumentException("velocity must be > 0 for reciprocate");
         if (req.SampleIntervalSeconds < 0.05) throw new ArgumentException("sampleIntervalSeconds must be >= 0.05");
@@ -182,6 +183,8 @@ public sealed class EnduranceTestRunner
         private readonly UserUnit? _unit;
         private readonly int _a, _b;
         private readonly TimeSpan _duration;
+        /// <summary>DurationMinutes = 0: 사용자가 중지하거나 오류로 끝날 때까지 운전.</summary>
+        private readonly bool _infinite;
         private readonly CancellationTokenSource _cts = new();
         private readonly Stopwatch _elapsed = new();
         private readonly object _lock = new();
@@ -212,7 +215,8 @@ public sealed class EnduranceTestRunner
         public Run(IEtherCatMaster master, Axis axis, EnduranceTestRequest req, UserUnit? unit, int a, int b)
         {
             _master = master; _axis = axis; _req = req; _unit = unit; _a = a; _b = b;
-            _duration = TimeSpan.FromMinutes(req.DurationMinutes);
+            _infinite = req.DurationMinutes == 0;
+            _duration = _infinite ? TimeSpan.Zero : TimeSpan.FromMinutes(req.DurationMinutes);
             _targetStepsPerSec = axis.Mechanics.UserToSteps(req.Velocity, unit);
             _targetRpm = axis.Mechanics.StepsPerSecToRpm(_targetStepsPerSec);
         }
@@ -258,7 +262,7 @@ public sealed class EnduranceTestRunner
                     ? $"연속 회전 {_req.Velocity} {UnitName}/s (≈ {_targetRpm:0.#} rpm)"
                     : $"왕복 A={_req.PointA} B={_req.PointB} {UnitName}, {_req.Velocity} {UnitName}/s (≈ {_targetRpm:0.#} rpm), 정지 {_req.DwellMs} ms";
                 Record(EnduranceSeverity.Info, "Start",
-                    $"시작: {mode}, 시간 {FormatDuration(_duration)}, 버스 통계 {(_req.ResetBusStatistics ? "초기화" : "유지")}, 자동복구 {(_req.AutoRecover ? $"최대 {_req.MaxRecoveries}회" : "안 함")}");
+                    $"시작: {mode}, 시간 {DurationText}, 버스 통계 {(_req.ResetBusStatistics ? "초기화" : "유지")}, 자동복구 {(_req.AutoRecover ? $"최대 {_req.MaxRecoveries}회" : "안 함")}");
 
                 string? notReady = NotReadyReason();
                 if (notReady is not null) throw new InvalidOperationException(notReady);
@@ -314,7 +318,9 @@ public sealed class EnduranceTestRunner
             }
         }
 
-        private bool TimeUp => _elapsed.Elapsed >= _duration;
+        private bool TimeUp => !_infinite && _elapsed.Elapsed >= _duration;
+
+        private string DurationText => _infinite ? "무한 (중지할 때까지)" : FormatDuration(_duration);
 
         private async Task RotateAsync(CancellationToken ct)
         {
@@ -670,7 +676,7 @@ public sealed class EnduranceTestRunner
                 sb.AppendLine($"축            : {s.AxisName} (#{s.AxisId}, slave {_axis.Slave}, {_axis.Profile.Name})");
                 sb.AppendLine($"방식          : {(_req.Mode == EnduranceMode.Rotate ? "연속 회전" : $"왕복 A={_req.PointA} B={_req.PointB} {UnitName}, 정지 {_req.DwellMs} ms")}");
                 sb.AppendLine($"지령 속도     : {_req.Velocity} {UnitName}/s ({_targetStepsPerSec} step/s, ≈ {_targetRpm:0.##} rpm)");
-                sb.AppendLine($"설정 시간     : {FormatDuration(_duration)}");
+                sb.AppendLine($"설정 시간     : {DurationText}");
                 sb.AppendLine($"시작 / 종료   : {s.StartedUtc?.ToLocalTime():yyyy-MM-dd HH:mm:ss} / {s.FinishedUtc?.ToLocalTime():yyyy-MM-dd HH:mm:ss}");
                 sb.AppendLine($"실제 운전     : {FormatDuration(TimeSpan.FromSeconds(s.ElapsedSeconds))}");
                 sb.AppendLine($"결과          : {s.Phase}{(s.StopReason is null ? "" : " — " + s.StopReason)}");

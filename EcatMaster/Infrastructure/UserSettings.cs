@@ -49,6 +49,7 @@ public sealed class UserSettings
     public bool EnduranceReverse { get; set; }
     public double EnduranceDuration { get; set; } = 60;
     public string EnduranceDurationUnit { get; set; } = "분";
+    public bool EnduranceInfinite { get; set; }
     public double EnduranceSampleSeconds { get; set; } = 1;
     public double EnduranceSpeedTolerance { get; set; } = 10;
     public bool EnduranceAutoRecover { get; set; }

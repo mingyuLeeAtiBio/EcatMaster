@@ -104,6 +104,7 @@ public sealed class MainViewModel : ObservableObject
         _etReverse = _settings.EnduranceReverse;
         _etDuration = _settings.EnduranceDuration;
         _etDurationUnit = EtDurationUnits.Contains(_settings.EnduranceDurationUnit) ? _settings.EnduranceDurationUnit : EtDurationUnits[0];
+        _etInfinite = _settings.EnduranceInfinite;
         _etSampleSeconds = _settings.EnduranceSampleSeconds;
         _etSpeedTolerance = _settings.EnduranceSpeedTolerance;
         _etAutoRecover = _settings.EnduranceAutoRecover;
@@ -158,6 +159,7 @@ public sealed class MainViewModel : ObservableObject
         _settings.EnduranceReverse = EtReverse;
         _settings.EnduranceDuration = EtDuration;
         _settings.EnduranceDurationUnit = EtDurationUnit;
+        _settings.EnduranceInfinite = EtInfinite;
         _settings.EnduranceSampleSeconds = EtSampleSeconds;
         _settings.EnduranceSpeedTolerance = EtSpeedTolerance;
         _settings.EnduranceAutoRecover = EtAutoRecover;
@@ -627,6 +629,13 @@ public sealed class MainViewModel : ObservableObject
     private string _etDurationUnit = "분";
     public string EtDurationUnit { get => _etDurationUnit; set => SetProperty(ref _etDurationUnit, value); }
 
+    private bool _etInfinite;
+    /// <summary>운전 시간 무한: 중지 버튼을 누르거나 오류로 끝날 때까지 운전.</summary>
+    public bool EtInfinite { get => _etInfinite; set { if (SetProperty(ref _etInfinite, value)) OnPropertyChanged(nameof(EtCanEditDuration)); } }
+
+    /// <summary>시간 입력칸·단위 활성 여부 (운전 중이 아니고 무한이 아닐 때).</summary>
+    public bool EtCanEditDuration => !EtRunning && !EtInfinite;
+
     private double _etSampleSeconds = 1;
     public double EtSampleSeconds { get => _etSampleSeconds; set => SetProperty(ref _etSampleSeconds, value); }
 
@@ -654,6 +663,7 @@ public sealed class MainViewModel : ObservableObject
         {
             if (!SetProperty(ref _etRunning, value)) return;
             KeepAwake.Set(value);   // 장시간 시험 중 PC 절전 방지
+            OnPropertyChanged(nameof(EtCanEditDuration));
             RefreshCommandStates();
         }
     }
@@ -671,7 +681,8 @@ public sealed class MainViewModel : ObservableObject
         if (axis is null || _master is null) return;
         try
         {
-            double minutes = EtDurationUnit == "시간" ? EtDuration * 60 : EtDuration;
+            double minutes = EtInfinite ? 0 : EtDurationUnit == "시간" ? EtDuration * 60 : EtDuration;   // 0 = 무한
+            if (!EtInfinite && minutes <= 0) { AppendLog(LogLevel.Warning, $"[{axis.Name}] 운전 시간은 0 보다 커야 합니다 (무한은 '무한' 체크)"); return; }
             bool rotate = EtIsRotate;
             var req = new EnduranceTestRequest(
                 rotate ? EnduranceMode.Rotate : EnduranceMode.Reciprocate,
@@ -686,7 +697,7 @@ public sealed class MainViewModel : ObservableObject
             _etLastFolder = System.IO.Path.GetDirectoryName(st.EventsFile);
             _etLastEventUtc = DateTime.MinValue;
             EtEvents.Clear();
-            AppendLog(LogLevel.Information, $"[{axis.Name}] 연속 운전 시작: {EtMode}, {EtDuration} {EtDurationUnit}, 기록 {st.EventsFile}");
+            AppendLog(LogLevel.Information, $"[{axis.Name}] 연속 운전 시작: {EtMode}, {(EtInfinite ? "무한" : $"{EtDuration} {EtDurationUnit}")}, 기록 {st.EventsFile}");
         }
         catch (Exception ex)
         {
@@ -744,7 +755,8 @@ public sealed class MainViewModel : ObservableObject
         string motion = st.Mode == nameof(EnduranceMode.Rotate)
             ? $"RPM {st.LastRpm:0.#} (지령 {st.TargetRpm:0.#}, 정속 최소/평균/최대 {st.MinRpm:0.#}/{st.AvgRpm:0.#}/{st.MaxRpm:0.#})"
             : $"왕복 {st.CompletedCycles}회 · 최대 위치오차 {st.MaxPositionErrorSteps} step";
-        EtStatusText = $"{phase} · 경과 {Hms(elapsed)} / 남음 {Hms(remain)} ({EtProgress:0.#}%)\n"
+        bool infinite = st.DurationSeconds <= 0;
+        EtStatusText = (infinite ? $"{phase} · 경과 {Hms(elapsed)} / 무한 (중지할 때까지)\n" : $"{phase} · 경과 {Hms(elapsed)} / 남음 {Hms(remain)} ({EtProgress:0.#}%)\n")
                        + $"{motion} · 누적 {st.Revolutions:0.#} rev\n"
                        + $"오류 {st.Errors} · 경고 {st.Warnings} · 복구 {st.Recoveries} · WKC 오류 {st.WkcErrors} · 사이클 누락 {st.MissedCycles} · 최대 지터 {st.MaxJitterUs:0} µs"
                        + (st.StopReason is null ? "" : $"\n종료 사유: {st.StopReason}");

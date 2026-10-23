@@ -557,8 +557,11 @@
                             <TextBlock Grid.Row="1" Grid.Column="3" Text="{Binding EtVelocityRpmText}" Style="{StaticResource FieldLabel}" Foreground="{StaticResource MutedBrush}" ToolTip="출력축 회전수 환산 (분해능·기어비·리드 반영)"/>
 
                             <TextBlock Grid.Row="2" Text="운전 시간" Style="{StaticResource FieldLabel}"/>
-                            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding EtDuration}" AutomationProperties.Name="연속 운전 시간" IsEnabled="{Binding EtRunning, Converter={StaticResource Inverse}}"/>
-                            <ComboBox Grid.Row="2" Grid.Column="2" Height="26" Margin="2" ItemsSource="{Binding EtDurationUnits}" SelectedItem="{Binding EtDurationUnit}" IsEnabled="{Binding EtRunning, Converter={StaticResource Inverse}}"/>
+                            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding EtDuration}" AutomationProperties.Name="연속 운전 시간" IsEnabled="{Binding EtCanEditDuration}"/>
+                            <ComboBox Grid.Row="2" Grid.Column="2" Height="26" Margin="2" ItemsSource="{Binding EtDurationUnits}" SelectedItem="{Binding EtDurationUnit}" IsEnabled="{Binding EtCanEditDuration}"/>
+                            <CheckBox Grid.Row="2" Grid.Column="3" Content="무한" IsChecked="{Binding EtInfinite}" VerticalAlignment="Center" Margin="6,0,0,0"
+                                      IsEnabled="{Binding EtRunning, Converter={StaticResource Inverse}}" AutomationProperties.Name="연속 운전 무한"
+                                      ToolTip="중지 버튼을 누르거나 오류로 끝날 때까지 계속 운전 (자동 복구를 켜면 횟수 소진 전까지 이어감)"/>
 
                             <TextBlock Grid.Row="3" Text="기록 주기" Style="{StaticResource FieldLabel}"/>
                             <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding EtSampleSeconds}" IsEnabled="{Binding EtRunning, Converter={StaticResource Inverse}}" ToolTip="샘플 CSV(위치·속도·RPM·상태·WKC·지터) 기록 간격"/>

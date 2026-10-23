@@ -116,7 +116,7 @@ public static class AxisEndpoints
                 catch (InvalidOperationException ex) { return Results.Problem(ex.Message, statusCode: 409); }
                 catch (IOException ex) { return Results.Problem($"cannot create log files: {ex.Message}", statusCode: 500); }
             })
-            .WithSummary("연속 운전 시작. body: { mode: Rotate|Reciprocate, velocity(부호=회전 방향), durationMinutes, pointA?, pointB?, dwellMs?, " +
+            .WithSummary("연속 운전 시작. body: { mode: Rotate|Reciprocate, velocity(부호=회전 방향), durationMinutes(0=무한), pointA?, pointB?, dwellMs?, " +
                          "sampleIntervalSeconds?, speedTolerancePercent?, autoRecover?, maxRecoveries?, unit? }. 사건·샘플·요약을 CSV/TXT 로 기록");
 
         g.MapGet("/{axis}/endurance-test", (string axis, IEtherCatMaster m, EnduranceTestRunner runner) =>

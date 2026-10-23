@@ -257,6 +257,7 @@ GUI 는 선택 축 패널의 **연속 운전** 그룹, REST 는 아래와 같다
 ```
 POST   /api/axes/X/endurance-test   { "mode": "Rotate", "velocity": 66667, "durationMinutes": 120 }
 POST   /api/axes/X/endurance-test   { "mode": "Reciprocate", "pointA": 0, "pointB": 50000, "velocity": 20000, "durationMinutes": 60, "dwellMs": 200 }
+POST   /api/axes/X/endurance-test   { "mode": "Rotate", "velocity": 41667, "durationMinutes": 0 }      ← 0 = 무한 (중지할 때까지)
 GET    /api/axes/X/endurance-test   → 경과, RPM 최소/평균/최대, 오류·경고 수, 최근 사건 200개, 기록 파일 경로
 DELETE /api/axes/X/endurance-test   → 중지 (감속 정지 후 요약 기록)
 GET    /api/endurance-tests         → 모든 축
