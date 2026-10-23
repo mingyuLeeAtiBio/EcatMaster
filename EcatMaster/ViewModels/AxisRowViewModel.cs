@@ -43,6 +43,7 @@ public sealed class AxisRowViewModel : ObservableObject
     private bool IsUm => _s.Unit == "um";
     public string PositionText => IsUm ? _s.PositionUser.ToString("F1") : _s.Position.ToString();
     public string VelocityText => IsUm ? _s.VelocityUser.ToString("F1") : _s.Velocity.ToString();
+    public string RpmText => _s.VelocityRpm.ToString("F1");
     public string TargetText => IsUm ? _s.TargetPositionUser.ToString("F1") : _s.TargetPosition.ToString();
 
     /// <summary>선택 축 상세 패널용: 상태 워드 비트 해석.</summary>

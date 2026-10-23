@@ -103,6 +103,43 @@ public static class AxisEndpoints
             .WithTags("Axes")
             .WithSummary("모든 축의 왕복 테스트 상태");
 
+        // ---- 연속 운전 (시간 기반 내구 시험) ----
+
+        g.MapPost("/{axis}/endurance-test", (string axis, EnduranceTestRequest req, IEtherCatMaster m, EnduranceTestRunner runner, CycleTestRunner cycles) =>
+            {
+                var a = m.GetAxis(axis);
+                if (a is null) return AxisNotFound(axis);
+                if (a.MotionBlocked) return Results.Problem($"axis {a.Id} blocked by interlock: {a.BlockReason}", statusCode: 409);
+                if (cycles.IsRunning(a.Id)) return Results.Problem($"axis {a.Id} has a running cycle test", statusCode: 409);
+                try { return Results.Accepted($"/api/axes/{a.Id}/endurance-test", runner.Start(m, a, req)); }
+                catch (ArgumentException ex) { return Results.Problem(ex.Message, statusCode: 400); }
+                catch (InvalidOperationException ex) { return Results.Problem(ex.Message, statusCode: 409); }
+                catch (IOException ex) { return Results.Problem($"cannot create log files: {ex.Message}", statusCode: 500); }
+            })
+            .WithSummary("연속 운전 시작. body: { mode: Rotate|Reciprocate, velocity(부호=회전 방향), durationMinutes, pointA?, pointB?, dwellMs?, " +
+                         "sampleIntervalSeconds?, speedTolerancePercent?, autoRecover?, maxRecoveries?, unit? }. 사건·샘플·요약을 CSV/TXT 로 기록");
+
+        g.MapGet("/{axis}/endurance-test", (string axis, IEtherCatMaster m, EnduranceTestRunner runner) =>
+            {
+                var a = m.GetAxis(axis);
+                if (a is null) return AxisNotFound(axis);
+                var s = runner.GetStatus(a.Id);
+                return s is null ? Results.Problem("no endurance test for this axis", statusCode: 404) : Results.Ok(s);
+            })
+            .WithSummary("연속 운전 진행 상태 (경과, RPM min/avg/max, 오류·경고 수, 최근 사건, 기록 파일 경로)");
+
+        g.MapDelete("/{axis}/endurance-test", (string axis, IEtherCatMaster m, EnduranceTestRunner runner) =>
+            {
+                var a = m.GetAxis(axis);
+                if (a is null) return AxisNotFound(axis);
+                return runner.Stop(a.Id) ? Results.Accepted() : Results.Problem("no running endurance test", statusCode: 409);
+            })
+            .WithSummary("연속 운전 중지 (감속 정지 후 요약 기록)");
+
+        app.MapGet("/api/endurance-tests", (EnduranceTestRunner runner) => runner.GetAll())
+            .WithTags("Axes")
+            .WithSummary("모든 축의 연속 운전 상태");
+
         // ---- 드라이브 설정 (전자기어 · 기어비 · 리드 · 속도/가감속 기본값) ----
 
         g.MapGet("/{axis}/drive-settings", (string axis, IEtherCatMaster m) =>

@@ -53,6 +53,8 @@ public sealed class DriveMechanics
     public double StepsPerRev => BaseStepsPerRev * (double)ElectronicGearB / ElectronicGearA;
     public double GearRatio => GearRatioRaw <= 0 ? 1.0 : GearRatioRaw / 100.0;
     public double StepsPerUm => StepsPerRev * GearRatio / LeadUm;
+    /// <summary>출력축 1회전당 step (= 분해능 × 기어비). RPM 환산 기준.</summary>
+    public double StepsPerOutputRev => StepsPerRev * GearRatio;
 
     public string UnitName => Unit == UserUnit.Um ? "um" : "step";
 
@@ -69,6 +71,12 @@ public sealed class DriveMechanics
 
     public uint UserToStepsUnsigned(double value, UserUnit? unit = null) =>
         (uint)Math.Round(Math.Clamp(UserToStepsExact(value, unit), 0, uint.MaxValue));
+
+    /// <summary>속도 [step/s = Hz] → 출력축 회전수 [r/min].</summary>
+    public double StepsPerSecToRpm(double stepsPerSec) => stepsPerSec * 60.0 / StepsPerOutputRev;
+
+    /// <summary>사용자 단위 속도 (um/s 또는 step/s) → 출력축 회전수 [r/min].</summary>
+    public double UserVelocityToRpm(double velocity, UserUnit? unit = null) => StepsPerSecToRpm(UserToStepsExact(velocity, unit));
 
     public static bool TryParseUnit(string? text, out UserUnit unit)
     {

@@ -249,6 +249,29 @@ GET    /api/cycle-tests         → 모든 축
 - 통계(이동 시간 최소/최대, 최대 위치 오차)는 검증계획 3단계(장기 안정성)의 판정 자료로 쓴다.
 - 여러 축을 동시에 돌릴 수 있다 (축마다 독립 실행).
 
+## 연속 운전 (시간 기반 내구 시험 · 에러 기록)
+
+연속 운전 시 안정성을 평가하려고 한 축을 **분/시간 단위**로 돌리면서 그동안 생긴 이상을 모두 파일로 남긴다.
+GUI 는 선택 축 패널의 **연속 운전** 그룹, REST 는 아래와 같다.
+
+```
+POST   /api/axes/X/endurance-test   { "mode": "Rotate", "velocity": 66667, "durationMinutes": 120 }
+POST   /api/axes/X/endurance-test   { "mode": "Reciprocate", "pointA": 0, "pointB": 50000, "velocity": 20000, "durationMinutes": 60, "dwellMs": 200 }
+GET    /api/axes/X/endurance-test   → 경과, RPM 최소/평균/최대, 오류·경고 수, 최근 사건 200개, 기록 파일 경로
+DELETE /api/axes/X/endurance-test   → 중지 (감속 정지 후 요약 기록)
+GET    /api/endurance-tests         → 모든 축
+```
+
+- **방식**: `Rotate` 는 속도(PV) 모드로 한 방향 연속 회전(속도 부호 = 방향, GUI 는 "역방향" 체크), `Reciprocate` 는 A↔B 왕복을 시간이 끝날 때까지 반복(GUI 는 위 왕복 테스트의 A/B·정지 시간 사용).
+- **기록** (`%LOCALAPPDATA%\EcatMaster\endurance\`, Linux 는 `~/.local/share/EcatMaster/endurance/`, GUI "기록 폴더" 버튼):
+  - `…_events.csv` — 사건: 드라이브 알람(603Fh 코드), 드라이브 경고(6041h bit7), 서보 꺼짐, 축 오프라인, 인터록 차단, 축 오류, 추종 오차, 속도 편차(지령 대비 `speedTolerancePercent`% 초과가 1 s 이상), 회전 멈춤, 실시간 사이클 정지, 슬레이브 OP 이탈·AL 상태, WKC 오류·사이클 누락(1초 단위로 묶음). 발생·해제 시각과 그 순간의 위치/속도/RPM/상태 워드를 함께 남긴다.
+  - `…_samples.csv` — `sampleIntervalSeconds`(기본 1 s) 마다 위치·속도·RPM·상태·WKC·지터 스냅샷.
+  - `…_summary.txt` — 결과, RPM 통계, 누적 회전수, 종류별 발생 횟수, 버스 통계.
+  CSV 는 UTF-8 BOM 이라 Excel 에서 바로 열린다.
+- **오류 처리**: 기본은 첫 오류에서 감속 정지하고 `Failed` 로 끝낸다. `autoRecover: true`(GUI "오류 시 자동 복구")면 알람 리셋 → 서보 온 → 운전 재개를 `maxRecoveries` 회까지 시도하고, 그 과정도 사건으로 남긴다.
+- 서보 온·인터록 해제 상태에서만 시작된다(아니면 REST 409). 시작할 때 마스터의 WKC 오류·사이클 누락·최대 지터 통계를 초기화해 시험 구간만 평가한다(`resetBusStatistics: false` 로 끔).
+- GUI 는 시험 중 Windows 절전을 막는다(화면 꺼짐은 허용). 해제(연결 끊기)하면 진행 중 시험을 중지하고 요약까지 기록한 뒤 끊는다.
+
 ## 드라이브 프로파일 (AZD / VPH-HD)
 
 벤더별 차이는 `IDriveProfile` 로 분리되어 있고, 슬레이브의 벤더 ID 로 자동 선택된다 (`Axes[].Profile` 로 강제 지정 가능).

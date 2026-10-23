@@ -20,6 +20,9 @@ builder.Services.AddSingleton<IHostedService>(sp => sp.GetRequiredService<IEther
 // ---- 왕복 테스트 실행기 ----
 builder.Services.AddSingleton<CycleTestRunner>();
 
+// ---- 시간 기반 연속 운전 (내구 시험) ----
+builder.Services.AddSingleton<EnduranceTestRunner>();
+
 // ---- 시리얼 ----
 builder.Services.AddSingleton<SerialService>();
 builder.Services.AddSingleton<IHostedService>(sp => sp.GetRequiredService<SerialService>());

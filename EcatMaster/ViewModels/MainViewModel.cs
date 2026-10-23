@@ -30,10 +30,13 @@ public sealed class MainViewModel : ObservableObject
         OpenIoGroupWindowCommand = new RelayCommand<IoGroupViewModel>(g => { if (g is not null) _dialogs.ShowIoGroup(g); });
         SaveAxisAliasCommand = new RelayCommand(SaveAxisAlias, () => IsConnected && SelectedAxis is not null);
         OpenDeviceConfigCommand = new RelayCommand(OpenDeviceConfig);
-        CtStartCommand = new RelayCommand(CtStart, () => IsConnected && SelectedAxis is not null && !CtRunning);
+        CtStartCommand = new RelayCommand(CtStart, () => IsConnected && SelectedAxis is not null && !CtRunning && !EtRunning);
         CtStopCommand = new RelayCommand(CtStop, () => IsConnected && SelectedAxis is not null && CtRunning);
         CtSetAFromCurrentCommand = new RelayCommand(() => { if (SelectedAxis is { } a) CtPointA = a.Axis.GetStatus().PositionUser; }, () => SelectedAxis is not null);
         CtSetBFromCurrentCommand = new RelayCommand(() => { if (SelectedAxis is { } a) CtPointB = a.Axis.GetStatus().PositionUser; }, () => SelectedAxis is not null);
+        EtStartCommand = new RelayCommand(EtStart, () => IsConnected && SelectedAxis is not null && !EtRunning && !CtRunning);
+        EtStopCommand = new RelayCommand(EtStop, () => IsConnected && SelectedAxis is not null && EtRunning);
+        EtOpenFolderCommand = new RelayCommand(EtOpenFolder);
         AutoConnectCommand = new AsyncRelayCommand(async () =>
         {
             if (Environment.GetEnvironmentVariable("ECATMASTER_NO_AUTOCONNECT") == "1") return;   // 자동화 테스트용
@@ -96,6 +99,15 @@ public sealed class MainViewModel : ObservableObject
         _ctVelocity = _settings.CycleVelocity;
         _ctCycles = _settings.CycleCount;
         _ctDwellMs = _settings.CycleDwellMs;
+        _etMode = EtModes[Math.Clamp(_settings.EnduranceMode, 0, EtModes.Length - 1)];
+        _etVelocity = _settings.EnduranceVelocity;
+        _etReverse = _settings.EnduranceReverse;
+        _etDuration = _settings.EnduranceDuration;
+        _etDurationUnit = EtDurationUnits.Contains(_settings.EnduranceDurationUnit) ? _settings.EnduranceDurationUnit : EtDurationUnits[0];
+        _etSampleSeconds = _settings.EnduranceSampleSeconds;
+        _etSpeedTolerance = _settings.EnduranceSpeedTolerance;
+        _etAutoRecover = _settings.EnduranceAutoRecover;
+        _etMaxRecoveries = _settings.EnduranceMaxRecoveries;
 
         NativeAvailable = SoemAdapters.IsNativeAvailable(out var err);
         if (!NativeAvailable)
@@ -141,6 +153,15 @@ public sealed class MainViewModel : ObservableObject
         _settings.CycleVelocity = CtVelocity;
         _settings.CycleCount = CtCycles;
         _settings.CycleDwellMs = CtDwellMs;
+        _settings.EnduranceMode = Array.IndexOf(EtModes, EtMode);
+        _settings.EnduranceVelocity = EtVelocity;
+        _settings.EnduranceReverse = EtReverse;
+        _settings.EnduranceDuration = EtDuration;
+        _settings.EnduranceDurationUnit = EtDurationUnit;
+        _settings.EnduranceSampleSeconds = EtSampleSeconds;
+        _settings.EnduranceSpeedTolerance = EtSpeedTolerance;
+        _settings.EnduranceAutoRecover = EtAutoRecover;
+        _settings.EnduranceMaxRecoveries = EtMaxRecoveries;
         _settings.Save();
     }
 
@@ -219,6 +240,7 @@ public sealed class MainViewModel : ObservableObject
             OnPropertyChanged(nameof(VelUnitLabel));
             OnPropertyChanged(nameof(AccUnitLabel));
             LoadDriveSettingsFields();
+            NotifyRpm();
         }
     }
 
@@ -481,6 +503,7 @@ public sealed class MainViewModel : ObservableObject
             SelectedAxisAlias = value?.Axis.Name ?? "";
             OnPropertyChanged(nameof(CanControlAxis));
             LoadDriveSettingsFields();
+            NotifyRpm();
             RefreshCommandStates();
         }
     }
@@ -493,7 +516,7 @@ public sealed class MainViewModel : ObservableObject
     public double TargetPosition { get => _targetPosition; set => SetProperty(ref _targetPosition, value); }
 
     private double _velocity = 1000;
-    public double Velocity { get => _velocity; set => SetProperty(ref _velocity, value); }
+    public double Velocity { get => _velocity; set { if (SetProperty(ref _velocity, value)) NotifyRpm(); } }
 
     private double _acceleration = 30_000;
     public double Acceleration { get => _acceleration; set => SetProperty(ref _acceleration, value); }
@@ -502,11 +525,32 @@ public sealed class MainViewModel : ObservableObject
     public double Deceleration { get => _deceleration; set => SetProperty(ref _deceleration, value); }
 
     private double _jogVelocity = 500;
-    public double JogVelocity { get => _jogVelocity; set => SetProperty(ref _jogVelocity, value); }
+    public double JogVelocity { get => _jogVelocity; set { if (SetProperty(ref _jogVelocity, value)) NotifyRpm(); } }
 
     // ------------------------------------------------------------ 왕복 테스트 (A ↔ B, N회)
 
     private readonly CycleTestRunner _cycleRunner = new();
+
+    // ------------------------------------------------------------ RPM 환산 (선택 축의 분해능·기어비·리드 기준, 출력축)
+
+    /// <summary>현재 단위의 속도 입력값 → "≈ 400 rpm". 축이 선택되지 않으면 빈 문자열.</summary>
+    private string RpmHint(double velocity) =>
+        SelectedAxis?.Axis.Mechanics is { } m ? $"≈ {m.UserVelocityToRpm(velocity):0.#} rpm" : "";
+
+    /// <summary>속도 0 은 드라이브 기본값(6081h)을 쓰므로 그 값을 환산해 보여 준다.</summary>
+    public string VelocityRpmText => Velocity == 0 && SelectedAxis?.Axis is { } a
+        ? $"≈ {a.Mechanics.StepsPerSecToRpm(a.Defaults.Velocity):0.#} rpm (기본)"
+        : RpmHint(Velocity);
+    public string JogVelocityRpmText => RpmHint(Math.Abs(JogVelocity));
+    public string CtVelocityRpmText => RpmHint(CtVelocity);
+
+    private void NotifyRpm()
+    {
+        OnPropertyChanged(nameof(VelocityRpmText));
+        OnPropertyChanged(nameof(JogVelocityRpmText));
+        OnPropertyChanged(nameof(CtVelocityRpmText));
+        OnPropertyChanged(nameof(EtVelocityRpmText));
+    }
 
     private double _ctPointA;
     public double CtPointA { get => _ctPointA; set => SetProperty(ref _ctPointA, value); }
@@ -515,7 +559,7 @@ public sealed class MainViewModel : ObservableObject
     public double CtPointB { get => _ctPointB; set => SetProperty(ref _ctPointB, value); }
 
     private double _ctVelocity = 5_000;
-    public double CtVelocity { get => _ctVelocity; set => SetProperty(ref _ctVelocity, value); }
+    public double CtVelocity { get => _ctVelocity; set { if (SetProperty(ref _ctVelocity, value)) NotifyRpm(); } }
 
     private int _ctCycles = 10;
     /// <summary>0 = 중지할 때까지 무한</summary>
@@ -560,6 +604,171 @@ public sealed class MainViewModel : ObservableObject
         if (_cycleRunner.Stop(axis.Id)) AppendLog(LogLevel.Information, $"[{axis.Name}] 왕복 테스트 중지 요청");
     }
 
+    // ------------------------------------------------------------ 연속 운전 (시간 기반 내구 시험)
+
+    private readonly EnduranceTestRunner _enduranceRunner = new();
+
+    public string[] EtModes { get; } = ["연속 회전", "왕복 (A↔B)"];
+    private string _etMode = "연속 회전";
+    public string EtMode { get => _etMode; set { if (SetProperty(ref _etMode, value)) OnPropertyChanged(nameof(EtIsRotate)); } }
+    public bool EtIsRotate => EtMode == EtModes[0];
+
+    private double _etVelocity = 66_667;
+    /// <summary>현재 단위 기준 속도 (크기). 회전 방향은 <see cref="EtReverse"/>.</summary>
+    public double EtVelocity { get => _etVelocity; set { if (SetProperty(ref _etVelocity, value)) NotifyRpm(); } }
+    public string EtVelocityRpmText => RpmHint(Math.Abs(EtVelocity));
+
+    private bool _etReverse;
+    public bool EtReverse { get => _etReverse; set => SetProperty(ref _etReverse, value); }
+
+    public string[] EtDurationUnits { get; } = ["분", "시간"];
+    private double _etDuration = 60;
+    public double EtDuration { get => _etDuration; set => SetProperty(ref _etDuration, value); }
+    private string _etDurationUnit = "분";
+    public string EtDurationUnit { get => _etDurationUnit; set => SetProperty(ref _etDurationUnit, value); }
+
+    private double _etSampleSeconds = 1;
+    public double EtSampleSeconds { get => _etSampleSeconds; set => SetProperty(ref _etSampleSeconds, value); }
+
+    private double _etSpeedTolerance = 10;
+    public double EtSpeedTolerance { get => _etSpeedTolerance; set => SetProperty(ref _etSpeedTolerance, value); }
+
+    private bool _etAutoRecover;
+    public bool EtAutoRecover { get => _etAutoRecover; set => SetProperty(ref _etAutoRecover, value); }
+
+    private int _etMaxRecoveries = 3;
+    public int EtMaxRecoveries { get => _etMaxRecoveries; set => SetProperty(ref _etMaxRecoveries, value); }
+
+    private string _etStatusText = "";
+    public string EtStatusText { get => _etStatusText; private set => SetProperty(ref _etStatusText, value); }
+
+    private double _etProgress;
+    /// <summary>0~100 [%]</summary>
+    public double EtProgress { get => _etProgress; private set => SetProperty(ref _etProgress, value); }
+
+    private bool _etRunning;
+    public bool EtRunning
+    {
+        get => _etRunning;
+        private set
+        {
+            if (!SetProperty(ref _etRunning, value)) return;
+            KeepAwake.Set(value);   // 장시간 시험 중 PC 절전 방지
+            RefreshCommandStates();
+        }
+    }
+
+    /// <summary>최근 사건 (최신이 위). "시각 [등급] 종류 · 메시지"</summary>
+    public ObservableCollection<string> EtEvents { get; } = new();
+
+    private string? _etLastFolder;
+    private DateTime _etLastEventUtc;
+    private string? _etLastReportedPhase;
+
+    private void EtStart()
+    {
+        var axis = SelectedAxis?.Axis;
+        if (axis is null || _master is null) return;
+        try
+        {
+            double minutes = EtDurationUnit == "시간" ? EtDuration * 60 : EtDuration;
+            bool rotate = EtIsRotate;
+            var req = new EnduranceTestRequest(
+                rotate ? EnduranceMode.Rotate : EnduranceMode.Reciprocate,
+                Velocity: rotate && EtReverse ? -Math.Abs(EtVelocity) : Math.Abs(EtVelocity),
+                DurationMinutes: minutes,
+                PointA: CtPointA, PointB: CtPointB, DwellMs: CtDwellMs,
+                Acceleration: Acceleration, Deceleration: Deceleration,
+                SampleIntervalSeconds: EtSampleSeconds,
+                SpeedTolerancePercent: EtSpeedTolerance,
+                AutoRecover: EtAutoRecover, MaxRecoveries: EtMaxRecoveries);
+            var st = _enduranceRunner.Start(_master, axis, req);
+            _etLastFolder = System.IO.Path.GetDirectoryName(st.EventsFile);
+            _etLastEventUtc = DateTime.MinValue;
+            EtEvents.Clear();
+            AppendLog(LogLevel.Information, $"[{axis.Name}] 연속 운전 시작: {EtMode}, {EtDuration} {EtDurationUnit}, 기록 {st.EventsFile}");
+        }
+        catch (Exception ex)
+        {
+            AppendLog(LogLevel.Warning, $"[{axis.Name}] 연속 운전 시작 실패: {ex.Message}");
+        }
+    }
+
+    private void EtStop()
+    {
+        var axis = SelectedAxis?.Axis;
+        if (axis is null) return;
+        if (_enduranceRunner.Stop(axis.Id)) AppendLog(LogLevel.Information, $"[{axis.Name}] 연속 운전 중지 요청");
+    }
+
+    private void EtOpenFolder()
+    {
+        string dir = _etLastFolder ?? EnduranceTestRunner.DefaultOutputDirectory;
+        try
+        {
+            System.IO.Directory.CreateDirectory(dir);
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", $"\"{dir}\"") { UseShellExecute = true });
+        }
+        catch (Exception ex) { AppendLog(LogLevel.Warning, $"기록 폴더 열기 실패: {ex.Message}"); }
+    }
+
+    /// <summary>72시간 같은 장시간도 표시되도록 총 시간 기준 hh:mm:ss.</summary>
+    private static string Hms(TimeSpan t) => $"{(int)t.TotalHours:00}:{t.Minutes:00}:{t.Seconds:00}";
+
+    private int _etEventsAxisId = -1;
+
+    private void RefreshEndurance()
+    {
+        var axis = SelectedAxis?.Axis;
+        if ((axis?.Id ?? -1) != _etEventsAxisId)
+        {
+            // 선택 축이 바뀌면 사건 목록을 그 축 기준으로 다시 채운다
+            _etEventsAxisId = axis?.Id ?? -1;
+            _etLastEventUtc = DateTime.MinValue;
+            EtEvents.Clear();
+        }
+        var st = axis is null ? null : _enduranceRunner.GetStatus(axis.Id);
+        // 다른 축에서 돌고 있어도 절전 방지는 유지
+        if (st is null) { EtRunning = false; KeepAwake.Set(_enduranceRunner.AnyRunning); EtStatusText = ""; EtProgress = 0; _etLastReportedPhase = null; return; }
+
+        EtRunning = st.Running;
+        KeepAwake.Set(_enduranceRunner.AnyRunning);
+        EtProgress = st.DurationSeconds > 0 ? Math.Min(100, st.ElapsedSeconds * 100 / st.DurationSeconds) : 0;
+        string phase = st.Phase switch
+        {
+            "Rotating" => "회전 중", "MoveToA" => "A로 이동", "MoveToB" => "B로 이동", "DwellA" => "A 정지", "DwellB" => "B 정지",
+            "Recovering" => "자동 복구 중", "Stopping" => "정지 중", "Completed" => "완료", "Stopped" => "중지됨", "Failed" => "중단(오류)", _ => st.Phase,
+        };
+        var elapsed = TimeSpan.FromSeconds(st.ElapsedSeconds);
+        var remain = TimeSpan.FromSeconds(Math.Max(0, st.DurationSeconds - st.ElapsedSeconds));
+        string motion = st.Mode == nameof(EnduranceMode.Rotate)
+            ? $"RPM {st.LastRpm:0.#} (지령 {st.TargetRpm:0.#}, 정속 최소/평균/최대 {st.MinRpm:0.#}/{st.AvgRpm:0.#}/{st.MaxRpm:0.#})"
+            : $"왕복 {st.CompletedCycles}회 · 최대 위치오차 {st.MaxPositionErrorSteps} step";
+        EtStatusText = $"{phase} · 경과 {Hms(elapsed)} / 남음 {Hms(remain)} ({EtProgress:0.#}%)\n"
+                       + $"{motion} · 누적 {st.Revolutions:0.#} rev\n"
+                       + $"오류 {st.Errors} · 경고 {st.Warnings} · 복구 {st.Recoveries} · WKC 오류 {st.WkcErrors} · 사이클 누락 {st.MissedCycles} · 최대 지터 {st.MaxJitterUs:0} µs"
+                       + (st.StopReason is null ? "" : $"\n종료 사유: {st.StopReason}");
+
+        // 새 사건만 목록 위에 추가하고, 경고·오류는 메인 로그에도 남긴다
+        var fresh = st.RecentEvents.TakeWhile(e => e.TimeUtc > _etLastEventUtc).Reverse().ToList();
+        foreach (var e in fresh)
+        {
+            string tag = e.Severity switch { EnduranceSeverity.Error => "오류", EnduranceSeverity.Warning => "경고", _ => "정보" };
+            EtEvents.Insert(0, $"{e.TimeUtc.ToLocalTime():HH:mm:ss} [{tag}] {e.Category} · {e.Message}");
+            if (e.Severity != EnduranceSeverity.Info)
+                AppendLog(e.Severity == EnduranceSeverity.Error ? LogLevel.Error : LogLevel.Warning, $"[{st.AxisName}] 연속 운전 {tag}: {e.Message}");
+        }
+        if (fresh.Count > 0) _etLastEventUtc = fresh[^1].TimeUtc;
+        while (EtEvents.Count > 200) EtEvents.RemoveAt(EtEvents.Count - 1);
+
+        if (!st.Running && st.Phase is "Completed" or "Stopped" or "Failed" && _etLastReportedPhase != st.Phase + st.FinishedUtc)
+        {
+            _etLastReportedPhase = st.Phase + st.FinishedUtc;
+            AppendLog(st.Phase == "Failed" ? LogLevel.Warning : LogLevel.Information,
+                $"[{st.AxisName}] 연속 운전 {phase}: 경과 {Hms(elapsed)}, 오류 {st.Errors} / 경고 {st.Warnings}. 요약: {st.SummaryFile}");
+        }
+    }
+
     private string? _ctLastReportedPhase;
 
     private void RefreshCycleTest()
@@ -590,20 +799,20 @@ public sealed class MainViewModel : ObservableObject
     // ------------------------------------------------------------ drive settings panel
 
     private uint _dsGearA = 1;
-    public uint DsGearA { get => _dsGearA; set { if (SetProperty(ref _dsGearA, value)) OnPropertyChanged(nameof(DsResolutionText)); } }
+    public uint DsGearA { get => _dsGearA; set { if (SetProperty(ref _dsGearA, value)) OnDsPreviewChanged(); } }
 
     private uint _dsGearB = 1;
-    public uint DsGearB { get => _dsGearB; set { if (SetProperty(ref _dsGearB, value)) OnPropertyChanged(nameof(DsResolutionText)); } }
+    public uint DsGearB { get => _dsGearB; set { if (SetProperty(ref _dsGearB, value)) OnDsPreviewChanged(); } }
 
     private short _dsGearRatioRaw;
-    public short DsGearRatioRaw { get => _dsGearRatioRaw; set { if (SetProperty(ref _dsGearRatioRaw, value)) OnPropertyChanged(nameof(DsResolutionText)); } }
+    public short DsGearRatioRaw { get => _dsGearRatioRaw; set { if (SetProperty(ref _dsGearRatioRaw, value)) OnDsPreviewChanged(); } }
 
     private double _dsLeadUm = 10_000;
-    public double DsLeadUm { get => _dsLeadUm; set { if (SetProperty(ref _dsLeadUm, value)) OnPropertyChanged(nameof(DsResolutionText)); } }
+    public double DsLeadUm { get => _dsLeadUm; set { if (SetProperty(ref _dsLeadUm, value)) OnDsPreviewChanged(); } }
 
     private double _dsPulsesPerRev = DriveMechanics.AzdBaseStepsPerRev;
     /// <summary>분해능 기준값: AZ 는 10,000 고정, VPH-HD 는 엔코더 분해능(편집 가능).</summary>
-    public double DsPulsesPerRev { get => _dsPulsesPerRev; set { if (SetProperty(ref _dsPulsesPerRev, value)) OnPropertyChanged(nameof(DsResolutionText)); } }
+    public double DsPulsesPerRev { get => _dsPulsesPerRev; set { if (SetProperty(ref _dsPulsesPerRev, value)) OnDsPreviewChanged(); } }
 
     private string _dsProfile = "";
     public string DsProfile { get => _dsProfile; private set => SetProperty(ref _dsProfile, value); }
@@ -632,7 +841,7 @@ public sealed class MainViewModel : ObservableObject
     public string DsAccUnit { get => _dsAccUnit; private set => SetProperty(ref _dsAccUnit, value); }
 
     private uint _dsVelocity;
-    public uint DsVelocity { get => _dsVelocity; set => SetProperty(ref _dsVelocity, value); }
+    public uint DsVelocity { get => _dsVelocity; set { if (SetProperty(ref _dsVelocity, value)) OnPropertyChanged(nameof(DsVelocityRpmText)); } }
 
     private uint _dsAcceleration;
     public uint DsAcceleration { get => _dsAcceleration; set => SetProperty(ref _dsAcceleration, value); }
@@ -658,6 +867,23 @@ public sealed class MainViewModel : ObservableObject
             return $"분해능 {stepsPerRev:0.##} {u}/rev" + (DsShowGearRatio ? $" · 기어비 {gear:0.##}" : "") +
                    $" · {stepsPerUm:0.####} {u}/µm  (1 µm = {1 / stepsPerUm:0.###} {u})";
         }
+    }
+
+    /// <summary>드라이브 설정 패널의 기본 속도(6081h, 원단위)를 입력 중인 분해능·기어비로 환산한 출력축 회전수.</summary>
+    public string DsVelocityRpmText
+    {
+        get
+        {
+            double stepsPerRev = Math.Max(1, DsPulsesPerRev) * (double)DsGearB / Math.Max(1u, DsGearA);
+            double gear = DsShowGearRatio && DsGearRatioRaw > 0 ? DsGearRatioRaw / 100.0 : 1.0;
+            return $"기본 속도 {DsVelocity} {DsVelUnit} = {DsVelocity * 60.0 / (stepsPerRev * gear):0.#} rpm (출력축)";
+        }
+    }
+
+    private void OnDsPreviewChanged()
+    {
+        OnPropertyChanged(nameof(DsResolutionText));
+        OnPropertyChanged(nameof(DsVelocityRpmText));
     }
 
     private void LoadDriveSettingsFields()
@@ -808,6 +1034,9 @@ public sealed class MainViewModel : ObservableObject
     public IRelayCommand CtStopCommand { get; }
     public IRelayCommand CtSetAFromCurrentCommand { get; }
     public IRelayCommand CtSetBFromCurrentCommand { get; }
+    public IRelayCommand EtStartCommand { get; }
+    public IRelayCommand EtStopCommand { get; }
+    public IRelayCommand EtOpenFolderCommand { get; }
     /// <summary>창 Loaded 에서 실행 (WindowBehaviors.LoadedCommand): 시작 시 자동 연결.</summary>
     public IRelayCommand AutoConnectCommand { get; }
 
@@ -1009,6 +1238,7 @@ public sealed class MainViewModel : ObservableObject
             if (_master is not null)
             {
                 foreach (var a in _master.Axes) _cycleRunner.Stop(a.Id);
+                await _enduranceRunner.StopAllAsync(TimeSpan.FromSeconds(5));   // 감속 정지 + 요약 기록까지
                 _master.StopAll(false);
                 await Task.Delay(50);
                 await _master.StopAsync(CancellationToken.None);
@@ -1055,9 +1285,11 @@ public sealed class MainViewModel : ObservableObject
 
         foreach (var row in Axes) row.Update();
         SelectedAxis?.Update();
+        NotifyRpm();   // 드라이브 설정 쓰기·리드 변경 뒤에도 환산값이 따라오도록
         foreach (var io in IoModules) io.Update();
         foreach (var g in IoGroups) g.Update();
         RefreshCycleTest();
+        RefreshEndurance();
 
         var st = _master.GetStatus();
         Master = st;

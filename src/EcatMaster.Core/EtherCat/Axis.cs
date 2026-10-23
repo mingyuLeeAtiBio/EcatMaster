@@ -27,7 +27,9 @@ public sealed record AxisStatus(
     double StepsPerUnit,
     double PositionUser,
     double VelocityUser,
-    double TargetPositionUser);
+    double TargetPositionUser,
+    /// <summary>실속도를 출력축 회전수로 환산 [r/min] (분해능·기어비 반영).</summary>
+    double VelocityRpm);
 
 /// <summary>
 /// 한 축의 CiA402 상태기계 + PP/PV/Homing 시퀀스.
@@ -204,7 +206,8 @@ public sealed class Axis
             StepsPerUnit: m.Unit == UserUnit.Um ? m.StepsPerUm : 1.0,
             PositionUser: m.StepsToUser(tx.PositionActual),
             VelocityUser: m.StepsToUser(tx.VelocityActual),
-            TargetPositionUser: m.StepsToUser(rx.TargetPosition));
+            TargetPositionUser: m.StepsToUser(rx.TargetPosition),
+            VelocityRpm: m.StepsPerSecToRpm(tx.VelocityActual));
     }
 
     public DriveSettings GetDriveSettings()

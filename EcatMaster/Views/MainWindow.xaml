@@ -197,6 +197,11 @@
                                     <Style TargetType="TextBlock"><Setter Property="TextAlignment" Value="Right"/></Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
+                            <DataGridTextColumn Header="RPM" Binding="{Binding RpmText}" Width="70">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock"><Setter Property="TextAlignment" Value="Right"/><Setter Property="ToolTip" Value="실속도를 출력축 회전수로 환산 (분해능·기어비 반영)"/></Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
                             <DataGridTextColumn Header="목표" Binding="{Binding TargetText}" Width="100">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock"><Setter Property="TextAlignment" Value="Right"/></Style>
@@ -415,6 +420,7 @@
                                 <ColumnDefinition Width="90"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="52"/>
+                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
@@ -427,6 +433,7 @@
                             <TextBlock Grid.Row="1" Text="속도" Style="{StaticResource FieldLabel}"/>
                             <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Velocity}" AutomationProperties.Name="속도" ToolTip="0 이면 드라이브에서 읽은 기본값(6081h)"/>
                             <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding VelUnitLabel}" Style="{StaticResource FieldLabel}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="3" Text="{Binding VelocityRpmText}" Style="{StaticResource FieldLabel}" Foreground="{StaticResource MutedBrush}" ToolTip="출력축 회전수 환산 (분해능·기어비·리드 반영)"/>
 
                             <TextBlock Grid.Row="2" Text="가속" Style="{StaticResource FieldLabel}"/>
                             <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Acceleration}" ToolTip="0 이면 드라이브 기본값(6083h)"/>
@@ -439,6 +446,7 @@
                             <TextBlock Grid.Row="4" Text="조그 속도" Style="{StaticResource FieldLabel}"/>
                             <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding JogVelocity}"/>
                             <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding VelUnitLabel}" Style="{StaticResource FieldLabel}"/>
+                            <TextBlock Grid.Row="4" Grid.Column="3" Text="{Binding JogVelocityRpmText}" Style="{StaticResource FieldLabel}" Foreground="{StaticResource MutedBrush}" ToolTip="출력축 회전수 환산 (분해능·기어비·리드 반영)"/>
                         </Grid>
 
                         <WrapPanel Margin="0,8,0,0">
@@ -502,6 +510,7 @@
                             <TextBlock Grid.Row="2" Text="속도" Style="{StaticResource FieldLabel}"/>
                             <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding CtVelocity}"/>
                             <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding VelUnitLabel}" Style="{StaticResource FieldLabel}"/>
+                            <TextBlock Grid.Row="2" Grid.Column="3" Text="{Binding CtVelocityRpmText}" Style="{StaticResource FieldLabel}" Foreground="{StaticResource MutedBrush}" ToolTip="출력축 회전수 환산 (분해능·기어비·리드 반영)"/>
 
                             <TextBlock Grid.Row="3" Text="왕복 횟수" Style="{StaticResource FieldLabel}"/>
                             <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding CtCycles}" ToolTip="0 = 중지할 때까지 무한"/>
@@ -520,6 +529,62 @@
                         <TextBlock Text="{Binding CtStatusText}" FontFamily="{StaticResource MonoFont}" FontSize="11" TextWrapping="Wrap" Margin="4,6,0,0"/>
                         <TextBlock FontSize="11" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="4,4,0,0"
                                    Text="서보 오프·알람·인터록·위치 오차(허용 5 step)·이동 타임아웃(60 s)이면 자동 중단되고 사유가 표시됩니다. 축을 바꾸면 그 축의 테스트 상태를 보여 줍니다."/>
+                    </StackPanel>
+                </GroupBox>
+
+                <GroupBox Header="연속 운전 (시간 기반 내구 시험 · 에러 기록)">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="90"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="52"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Text="방식" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox Grid.Row="0" Grid.Column="1" Height="26" Margin="2" ItemsSource="{Binding EtModes}" SelectedItem="{Binding EtMode}" IsEnabled="{Binding EtRunning, Converter={StaticResource Inverse}}"
+                                      ToolTip="연속 회전: 속도 모드로 한 방향 계속 회전 / 왕복: 위 왕복 테스트의 A·B 지점과 정지 시간을 사용"/>
+                            <CheckBox Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="2" Content="역방향" IsChecked="{Binding EtReverse}" VerticalAlignment="Center" Margin="6,0,0,0"
+                                      Visibility="{Binding EtIsRotate, Converter={StaticResource BoolToVis}}" IsEnabled="{Binding EtRunning, Converter={StaticResource Inverse}}"/>
+
+                            <TextBlock Grid.Row="1" Text="속도" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding EtVelocity}" AutomationProperties.Name="연속 운전 속도" IsEnabled="{Binding EtRunning, Converter={StaticResource Inverse}}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding VelUnitLabel}" Style="{StaticResource FieldLabel}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="3" Text="{Binding EtVelocityRpmText}" Style="{StaticResource FieldLabel}" Foreground="{StaticResource MutedBrush}" ToolTip="출력축 회전수 환산 (분해능·기어비·리드 반영)"/>
+
+                            <TextBlock Grid.Row="2" Text="운전 시간" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding EtDuration}" AutomationProperties.Name="연속 운전 시간" IsEnabled="{Binding EtRunning, Converter={StaticResource Inverse}}"/>
+                            <ComboBox Grid.Row="2" Grid.Column="2" Height="26" Margin="2" ItemsSource="{Binding EtDurationUnits}" SelectedItem="{Binding EtDurationUnit}" IsEnabled="{Binding EtRunning, Converter={StaticResource Inverse}}"/>
+
+                            <TextBlock Grid.Row="3" Text="기록 주기" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding EtSampleSeconds}" IsEnabled="{Binding EtRunning, Converter={StaticResource Inverse}}" ToolTip="샘플 CSV(위치·속도·RPM·상태·WKC·지터) 기록 간격"/>
+                            <TextBlock Grid.Row="3" Grid.Column="2" Text="s" Style="{StaticResource FieldLabel}"/>
+
+                            <TextBlock Grid.Row="4" Text="속도 허용 편차" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding EtSpeedTolerance}" IsEnabled="{Binding EtRunning, Converter={StaticResource Inverse}}" ToolTip="연속 회전에서 실속도가 지령보다 이 비율 이상 1초 넘게 벗어나면 경고로 기록. 0 = 검사 안 함"/>
+                            <TextBlock Grid.Row="4" Grid.Column="2" Text="%" Style="{StaticResource FieldLabel}"/>
+
+                            <CheckBox Grid.Row="5" Grid.Column="1" Content="오류 시 자동 복구 (알람 리셋 → 서보 온 → 재개)" IsChecked="{Binding EtAutoRecover}" VerticalAlignment="Center" Margin="2,4"
+                                      IsEnabled="{Binding EtRunning, Converter={StaticResource Inverse}}" ToolTip="끄면 첫 오류에서 감속 정지하고 시험을 끝낸다"/>
+                            <StackPanel Grid.Row="5" Grid.Column="2" Grid.ColumnSpan="2" Orientation="Horizontal" Visibility="{Binding EtAutoRecover, Converter={StaticResource BoolToVis}}">
+                                <TextBox Width="40" Text="{Binding EtMaxRecoveries}" IsEnabled="{Binding EtRunning, Converter={StaticResource Inverse}}" ToolTip="최대 자동 복구 횟수"/>
+                                <TextBlock Text="회까지" Style="{StaticResource FieldLabel}"/>
+                            </StackPanel>
+                        </Grid>
+                        <WrapPanel Margin="0,6,0,0">
+                            <Button Content="▶ 연속 운전 시작" Style="{StaticResource PrimaryButton}" Command="{Binding EtStartCommand}" MinWidth="120"
+                                    ToolTip="서보 온 상태에서 시작. 가감속은 축 제어의 가속/감속 입력값 사용"/>
+                            <Button Content="■ 중지" Style="{StaticResource DangerButton}" Command="{Binding EtStopCommand}" MinWidth="80" ToolTip="감속 정지(Halt) 후 요약 기록"/>
+                            <Button Content="기록 폴더" Command="{Binding EtOpenFolderCommand}" MinWidth="80" ToolTip="사건(_events.csv)·샘플(_samples.csv)·요약(_summary.txt) 파일 위치"/>
+                        </WrapPanel>
+                        <ProgressBar Height="6" Margin="4,6,4,0" Minimum="0" Maximum="100" Value="{Binding EtProgress, Mode=OneWay}"/>
+                        <TextBlock Text="{Binding EtStatusText}" FontFamily="{StaticResource MonoFont}" FontSize="11" TextWrapping="Wrap" Margin="4,6,0,0"/>
+                        <ListBox ItemsSource="{Binding EtEvents}" Height="120" Margin="0,6,0,0" FontFamily="{StaticResource MonoFont}" FontSize="11"
+                                 AutomationProperties.Name="연속 운전 사건"/>
                     </StackPanel>
                 </GroupBox>
 
@@ -576,6 +641,7 @@
                         </Grid>
                         <TextBlock Text="{Binding DsFormula}" FontSize="11" Foreground="{StaticResource MutedBrush}" Margin="4,6,0,0"/>
                         <TextBlock Text="{Binding DsResolutionText}" FontFamily="{StaticResource MonoFont}" FontSize="11" TextWrapping="Wrap" Margin="4,2,0,0"/>
+                        <TextBlock Text="{Binding DsVelocityRpmText}" FontFamily="{StaticResource MonoFont}" FontSize="11" TextWrapping="Wrap" Margin="4,2,0,0"/>
                         <WrapPanel Margin="0,6,0,0">
                             <Button Content="드라이브에서 읽기" Command="{Binding ReadDriveSettingsCommand}" MinWidth="120"/>
                             <Button Content="쓰기 (RAM)" Command="{Binding WriteDriveSettingsCommand}" MinWidth="90"

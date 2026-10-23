@@ -43,6 +43,17 @@ public sealed class UserSettings
     public int CycleCount { get; set; } = 10;
     public int CycleDwellMs { get; set; } = 200;
 
+    // 연속 운전 (내구 시험)
+    public int EnduranceMode { get; set; }              // 0 = 연속 회전, 1 = 왕복
+    public double EnduranceVelocity { get; set; } = 66_667;
+    public bool EnduranceReverse { get; set; }
+    public double EnduranceDuration { get; set; } = 60;
+    public string EnduranceDurationUnit { get; set; } = "분";
+    public double EnduranceSampleSeconds { get; set; } = 1;
+    public double EnduranceSpeedTolerance { get; set; } = 10;
+    public bool EnduranceAutoRecover { get; set; }
+    public int EnduranceMaxRecoveries { get; set; } = 3;
+
     private static readonly string PathOnDisk =
         AppPaths.SettingsFile;   // %LOCALAPPDATA%/EcatMaster/settings.json (구 DirectControl 폴더에서 자동 이전)
 
